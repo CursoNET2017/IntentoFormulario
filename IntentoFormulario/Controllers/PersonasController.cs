@@ -10,24 +10,31 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using IntentoFormulario;
 using IntentoFormulario.Models;
+using IntentoFormulario.Service;
 
 namespace IntentoFormulario.Controllers
 {
     public class PersonasController : ApiController
     {
-        private ApplicationDbContext db = new ApplicationDbContext();
+        //private ApplicationDbContext db = new ApplicationDbContext();
+        private IPersonaService personaService;
+
+        public PersonasController(IPersonaService _personaService)
+        {
+            this.personaService = _personaService;
+        }
 
         // GET: api/Personas
         public IQueryable<Persona> GetPersonas()
         {
-            return db.Personas;
+            return personaService.GetPersonas();
         }
 
         // GET: api/Personas/5
         [ResponseType(typeof(Persona))]
         public IHttpActionResult GetPersona(long id)
         {
-            Persona persona = db.Personas.Find(id);
+            Persona persona = personaService.Get(id);
             if (persona == null)
             {
                 return NotFound();
@@ -48,26 +55,15 @@ namespace IntentoFormulario.Controllers
             if (id != persona.Id)
             {
                 return BadRequest();
-            }
-
-            db.Entry(persona).State = EntityState.Modified;
-
+            }            
             try
             {
-                db.SaveChanges();
+                personaService.Put(persona);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (NoEncontradoException)
             {
-                if (!PersonaExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
-
             return StatusCode(HttpStatusCode.NoContent);
         }
 
@@ -80,8 +76,7 @@ namespace IntentoFormulario.Controllers
                 return BadRequest(ModelState);
             }
 
-            db.Personas.Add(persona);
-            db.SaveChanges();
+            persona = personaService.Create(persona);
 
             return CreatedAtRoute("DefaultApi", new { id = persona.Id }, persona);
         }
@@ -90,18 +85,18 @@ namespace IntentoFormulario.Controllers
         [ResponseType(typeof(Persona))]
         public IHttpActionResult DeletePersona(long id)
         {
-            Persona persona = db.Personas.Find(id);
-            if (persona == null)
+            Persona persona;
+            try
+            {
+                persona = personaService.Delete(id);
+            } catch (NoEncontradoException)
             {
                 return NotFound();
             }
 
-            db.Personas.Remove(persona);
-            db.SaveChanges();
-
             return Ok(persona);
         }
-
+        /*
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -115,5 +110,6 @@ namespace IntentoFormulario.Controllers
         {
             return db.Personas.Count(e => e.Id == id) > 0;
         }
+        */
     }
 }

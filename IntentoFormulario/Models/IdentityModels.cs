@@ -4,6 +4,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using System.Data.Entity;
+using System;
 
 namespace IntentoFormulario.Models
 {
@@ -21,6 +22,8 @@ namespace IntentoFormulario.Models
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        [ThreadStatic]
+        public static ApplicationDbContext applicationDbContext;//Lo plantamos aqui colapso de capas. ApplicationDbContext solo en el Repository
         public ApplicationDbContext()
             : base("DefaultConnection", throwIfV1Schema: false)
         {
