@@ -11,9 +11,12 @@ using System.Web.Http.Description;
 using IntentoFormulario;
 using IntentoFormulario.Models;
 using IntentoFormulario.Service;
+using System.Web.Http.Cors;
 
 namespace IntentoFormulario.Controllers
 {
+    [EnableCors(origins: "*", headers: "*", methods: "*")]
+
     public class PersonasController : ApiController
     {
         //private ApplicationDbContext db = new ApplicationDbContext();

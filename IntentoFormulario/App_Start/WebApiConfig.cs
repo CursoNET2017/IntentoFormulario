@@ -19,6 +19,7 @@ namespace IntentoFormulario
 
             // Rutas de Web API
             config.MapHttpAttributeRoutes();
+            config.EnableCors();//Para compartir la informacion entros los dos servidodes?¿¿?¿?
 
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",
