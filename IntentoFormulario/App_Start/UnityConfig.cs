@@ -40,32 +40,45 @@ namespace IntentoFormulario
                GetNextInterceptionBehaviorDelegate getNext)
         {
             IMethodReturn result;
-            using (var context = new ApplicationDbContext())
+            if (ApplicationDbContext.applicationDbContext == null)
             {
-                ApplicationDbContext.applicationDbContext = context;
-                using (var dbContextTransaction = context.Database.BeginTransaction())
+                using (var context = new ApplicationDbContext())
                 {
-                    try
+                    ApplicationDbContext.applicationDbContext = context;
+                    using (var dbContextTransaction = context.Database.BeginTransaction())
                     {
-                        result = getNext()(input, getNext);
-                        if (result.Exception != null)
+                        try
                         {
-                            throw result.Exception;
+                            result = getNext()(input, getNext);
+                            if (result.Exception != null)
+                            {
+                                throw result.Exception;
+                            }
+
+                            context.SaveChanges();
+
+                            dbContextTransaction.Commit();
                         }
-
-                        context.SaveChanges();
-
-                        dbContextTransaction.Commit();
-                    }
-                    catch (Exception e)
-                    {
-                        dbContextTransaction.Rollback();
-                        throw new Exception("He hecho rollback de la transacción", e);
+                        catch (Exception e)
+                        {
+                            dbContextTransaction.Rollback();
+                            ApplicationDbContext.applicationDbContext = null;
+                            throw new Exception("He hecho rollback de la transacción", e);
+                        }
                     }
                 }
+                ApplicationDbContext.applicationDbContext = null;
+                return result;
             }
-            ApplicationDbContext.applicationDbContext = null;
-            return result;
+            else
+            {
+                result = getNext()(input, getNext);
+                if (result.Exception != null)
+                {
+                    throw new Exception("Ocurrió una excepción" + result.Exception);
+                }
+                return result;
+            }
         }
 
         public IEnumerable<Type> GetRequiredInterfaces()
